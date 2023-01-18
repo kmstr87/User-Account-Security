@@ -4,7 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const ejs = require("ejs");
-const session = require('express-session');
+const session = require("express-session");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
@@ -14,7 +14,7 @@ const findOrCreate = require("mongoose-findorcreate");
 const app = express();
 
 app.use(express.static("public"));
-app.set('view engine', 'ejs');
+app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(session({
@@ -26,14 +26,12 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-mongoose.set('strictQuery', true);
-mongoose.connect("mongodb://127.0.0.1:27017/userDB", {useNewUrlParser: true});
+mongoose.set("strictQuery", true);
+mongoose.connect(process.env.MONGODB_CONNECTION, {useNewUrlParser: true});
 
 const userSchema = new mongoose.Schema({
     email: String,
     password: String,
-    googleId: String,
-    facebookId: String,
     secret: String
 });
 
@@ -58,10 +56,10 @@ passport.deserializeUser(function(user, cb) {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "http://localhost:3000/auth/google/secrets"
+    callbackURL: "https://user-auth-project.onrender.com/auth/google/secrets"
   },
   function(accessToken, refreshToken, profile, cb) {
-    User.findOrCreate({ facebookId: profile.id }, function (err, user) {
+    User.findOrCreate({ username: profile.id }, function (err, user) {
       return cb(err, user);
     });
   }
@@ -70,10 +68,10 @@ passport.use(new GoogleStrategy({
 passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
-    callbackURL: "http://localhost:3000/auth/facebook/secrets"
+    callbackURL: "https://user-auth-project.onrender.com/auth/facebook/secrets"
   },
   function(accessToken, refreshToken, profile, cb) {
-    User.findOrCreate({ facebookId: profile.id }, function (err, user) {
+    User.findOrCreate({ username: profile.id }, function (err, user) {
       return cb(err, user);
     });
   }
@@ -88,9 +86,9 @@ app.route("/login")
     .get((req, res) => {
         res.render("login");
     })
-    .post(passport.authenticate('local', {
-        successRedirect: '/secrets',
-        failureRedirect: '/login'
+    .post(passport.authenticate("local", {
+        successRedirect: "/secrets",
+        failureRedirect: "/login"
     }));
 
 
@@ -117,7 +115,7 @@ app.route("/logout")
             if (err) { 
                 console.log(err);
             }
-            res.redirect('/');
+            res.redirect("/");
         });
     });
 
@@ -179,6 +177,6 @@ app.route("/auth/facebook/secrets")
       res.redirect("/secrets");
     });
 
-app.listen(3000, () => {
+app.listen(process.env.PORT || 3000, () => {
     console.log("Server started on port 3000.")
 })
