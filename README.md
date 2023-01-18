@@ -1,4 +1,4 @@
-Whisper Copycat App
+## Whisper Copycat App
 
 Check out the website, deployed with Render.
 
